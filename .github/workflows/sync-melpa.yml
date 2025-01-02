@@ -29,48 +29,42 @@ jobs:
   sync-melpa:
     name: Sync packages from Melpa
     runs-on: ubuntu-24.04
-    outputs:
-      package-archive-name: ${{ steps.package-archive-name.outputs.PACKAGE_ARCHIVE_NAME }}
+    steps:
+      - name: Sync in Melpa packages files
+        run: rsync -avz --compress-choice=zstd --delete rsync://melpa.org/packages/ "packages/"
+
+      - name: Upload as artifact
+        uses: actions/upload-artifact@v4.4.3
+        with:
+          name: packages
+          path: packages
+          if-no-files-found: error
+
+  create-repo:
+    name: Create the repo
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-24.04
+    needs: [sync-melpa]
     steps:
       - name: Generate package archive's name
         id: package-archive-name
         run:
           echo "PACKAGE_ARCHIVE_NAME=$(date +"%Y-%m-%d")" >> $GITHUB_ENV
-
-      - name: Sync in Melpa packages files
-        run: rsync -avz --compress-choice=zstd --delete rsync://melpa.org/packages/ "${PACKAGE_ARCHIVE_NAME}/"
-      - name: Pack the files
-        run: XZ_OPT=-9 tar Jcvf "${PACKAGE_ARCHIVE_NAME}.tar.xz" "${PACKAGE_ARCHIVE_NAME}/"
-
-      - name: Upload as artifact
-        uses: actions/upload-artifact@v4.4.3
-        with:
-          name: ${{ env.PACKAGE_ARCHIVE_NAME }}.tar.xz
-          path: ${{ env.PACKAGE_ARCHIVE_NAME }}.tar.xz
-          if-no-files-found: error
-
-  upload:
-    name: Upload to releases
-    if: github.ref == 'refs/heads/master'
-    runs-on: ubuntu-24.04
-    needs: [sync-melpa]
-    env:
-      PACKAGE_ARCHIVE_NAME: ${{ needs.sync-melpa.outputs.package-archive-name }}
-    permissions:
-      contents: write
-    steps:
-      # Check out, otherwise gh doesn't know which repo to upload to.
-      - uses: actions/checkout@v4.2.2
-
-      - name: Generate package archive's name
-        run:
-          echo "PACKAGE_ARCHIVE_NAME=$(date +"%Y-%m-%d")" >> $GITHUB_ENV
-
       - uses: actions/download-artifact@v4.1.8
         with:
-          name: ${{ env.PACKAGE_ARCHIVE_NAME }}.tar.xz
+          name: packages
+      - name: Create local repo
+        run: |
+          git init .
+          git config user.email bot@delpa.org
+          git config user.name "Delpa Bot"
+          echo "[Melpa](https://melpa.org) snapshot on ${PACKAGE_ARCHIVE_NAME}" > README.md
+          git add .
+          git commit -m "Initial commit"
 
-      - name: Upload to release
-        run: gh release upload packages ${PACKAGE_ARCHIVE_NAME}.tar.xz
+      - name: Create org repo
+        run: |
+          gh repo create "delpa-org/snapshot-${PACKAGE_ARCHIVE_NAME}" -d "Melpa snapshot on ${PACKAGE_ARCHIVE_NAME}"  --disable-wiki  --push
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
