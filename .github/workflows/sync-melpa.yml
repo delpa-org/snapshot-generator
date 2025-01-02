@@ -33,6 +33,10 @@ jobs:
       - name: Generate artifact's name
         run:  echo "ARTIFACT_NAME=$(date +"%Y-%m-%dT%H%M%S%z").tar.xz" >> $GITHUB_ENV
 
+      - uses: actions/checkout@v4.2.2
+        with:
+          submodules: true
+
       - name: Sync in Melpa packages files
         run: rsync -avz --compress-choice=zstd --delete rsync://melpa.org/packages/ "${PACKAGE_ARCHIVE_NAME}/"
       - name: Pack the files
