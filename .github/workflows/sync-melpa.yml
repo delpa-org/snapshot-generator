@@ -1,0 +1,53 @@
+# This file is part of Delpa.
+#
+# Delpa is free software: you can redistribute it and/or modify it under the
+# terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+#
+# Delpa is distributed in the hope that it will be useful, but WITHOUT ANY
+# WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+# A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along with
+# Delpa. If not, see <https://www.gnu.org/licenses/>.
+
+name: Sync from Melpa
+
+on:
+  push:  # TODO: Remove this once initial experiment goes through
+    branches: ["master"]
+  pull_request:
+    branches: ["master"]
+  schedule:
+    - cron: '0 2 * * *'
+
+jobs:
+  sync_melpa:
+    name: Sync packages from Melpa
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Generate package archive's name
+        run:
+          echo "PACKAGE_ARCHIVE_NAME=$(date +"%Y-%m-%d")" >> $GITHUB_ENV
+
+      - name: Generate artifact's name
+        run:  echo "ARTIFACT_NAME=$(date +"%Y-%m-%dT%H%M%S%z").tar.xz" >> $GITHUB_ENV
+
+      - name: Sync in Melpa packages files
+        run: rsync -avz --delete rsync://melpa.org/packages/ "${PACKAGE_ARCHIVE_NAME}/"
+      - name: Pack the files
+        run: XZ_OPT=-9 tar Jcvf "${PACKAGE_ARCHIVE_NAME}.tar.xz" "${PACKAGE_ARCHIVE_NAME}/"
+
+      - name: Upload as artifact
+        uses: actions/upload-artifact@v4.4.3
+        with:
+          name: ${{ env.ARTIFACT_NAME }}
+          path: ${{ env.PACKAGE_ARCHIVE_NAME }}.tar.xz
+          if-no-files-found: error
+
+      - name: Upload to release
+        if: github.ref == 'refs/heads/master'
+        run: gh release upload ${{github.event.release.tag_name}} ${PACKAGE_ARCHIVE_NAME}.tar.xz
+        env:
+          GITHUB_TOKEN: ${{ github.TOKEN }}
