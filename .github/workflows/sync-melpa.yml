@@ -15,8 +15,6 @@
 name: Sync from Melpa
 
 on:
-  push:  # TODO: Remove this once initial experiment goes through
-    branches: ["master"]
   pull_request:
     branches: ["master"]
   schedule:
@@ -48,6 +46,6 @@ jobs:
 
       - name: Upload to release
         if: github.ref == 'refs/heads/master'
-        run: gh release upload ${{github.event.release.tag_name}} ${PACKAGE_ARCHIVE_NAME}.tar.xz
+        run: gh release upload packages ${PACKAGE_ARCHIVE_NAME}.tar.xz
         env:
-          GITHUB_TOKEN: ${{ github.TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
