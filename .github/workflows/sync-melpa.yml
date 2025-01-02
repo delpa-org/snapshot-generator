@@ -52,5 +52,7 @@ jobs:
       - name: Upload to release
         if: github.ref == 'refs/heads/master'
         run: gh release upload packages ${PACKAGE_ARCHIVE_NAME}.tar.xz
+        permissions:
+          contents: write
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
