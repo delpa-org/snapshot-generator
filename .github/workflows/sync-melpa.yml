@@ -64,7 +64,7 @@ jobs:
 
       - name: Create org repo
         run: |
-          gh repo create "delpa-org/snapshot-${PACKAGE_ARCHIVE_NAME}" -d "Melpa snapshot on ${PACKAGE_ARCHIVE_NAME}"  --disable-wiki  --push
+          gh repo create "delpa-org/snapshot-${PACKAGE_ARCHIVE_NAME}" -d "Melpa snapshot on ${PACKAGE_ARCHIVE_NAME}"  --disable-wiki  --push --public
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
