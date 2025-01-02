@@ -34,7 +34,7 @@ jobs:
         run:  echo "ARTIFACT_NAME=$(date +"%Y-%m-%dT%H%M%S%z").tar.xz" >> $GITHUB_ENV
 
       - name: Sync in Melpa packages files
-        run: rsync -avz --delete rsync://melpa.org/packages/ "${PACKAGE_ARCHIVE_NAME}/"
+        run: rsync -avz --compress-level=22 --compress-choice=zstd --delete rsync://melpa.org/packages/ "${PACKAGE_ARCHIVE_NAME}/"
       - name: Pack the files
         run: XZ_OPT=-9 tar Jcvf "${PACKAGE_ARCHIVE_NAME}.tar.xz" "${PACKAGE_ARCHIVE_NAME}/"
 
@@ -49,4 +49,4 @@ jobs:
         if: github.ref == 'refs/heads/master'
         run: gh release upload packages ${PACKAGE_ARCHIVE_NAME}.tar.xz
         env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
