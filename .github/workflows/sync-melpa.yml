@@ -22,20 +22,16 @@ on:
     - cron: '0 0 2 * *'
 
 jobs:
-  sync_melpa:
+  sync-melpa:
     name: Sync packages from Melpa
     runs-on: ubuntu-24.04
+    outputs:
+      package-archive-name: ${{ steps.package-archive-name.outputs.PACKAGE_ARCHIVE_NAME }}
     steps:
       - name: Generate package archive's name
+        id: package-archive-name
         run:
           echo "PACKAGE_ARCHIVE_NAME=$(date +"%Y-%m-%d")" >> $GITHUB_ENV
-
-      - name: Generate artifact's name
-        run:  echo "ARTIFACT_NAME=$(date +"%Y-%m-%dT%H%M%S%z").tar.xz" >> $GITHUB_ENV
-
-      - uses: actions/checkout@v4.2.2
-        with:
-          submodules: true
 
       - name: Sync in Melpa packages files
         run: rsync -avz --compress-choice=zstd --delete rsync://melpa.org/packages/ "${PACKAGE_ARCHIVE_NAME}/"
@@ -45,14 +41,33 @@ jobs:
       - name: Upload as artifact
         uses: actions/upload-artifact@v4.4.3
         with:
-          name: ${{ env.ARTIFACT_NAME }}
+          name: ${{ env.PACKAGE_ARCHIVE_NAME }}.tar.xz
           path: ${{ env.PACKAGE_ARCHIVE_NAME }}.tar.xz
           if-no-files-found: error
+
+  upload:
+    name: Upload to releases
+    runs-on: ubuntu-24.04
+    needs: [sync-melpa]
+    env:
+      PACKAGE_ARCHIVE_NAME: ${{ needs.sync-melpa.outputs.package-archive-name }}
+    permissions:
+      contents: write
+    steps:
+      # Check out, otherwise gh doesn't know which repo to upload to.
+      - uses: actions/checkout@v4.2.2
+
+      - name: Generate package archive's name
+        run:
+          echo "PACKAGE_ARCHIVE_NAME=$(date +"%Y-%m-%d")" >> $GITHUB_ENV
+
+      - uses: actions/download-artifact@v4.1.8
+        with:
+          name: ${{ env.PACKAGE_ARCHIVE_NAME }}.tar.xz
+          path: ${{ env.PACKAGE_ARCHIVE_NAME }}.tar.xz
 
       - name: Upload to release
         if: github.ref == 'refs/heads/master'
         run: gh release upload packages ${PACKAGE_ARCHIVE_NAME}.tar.xz
-        permissions:
-          contents: write
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
