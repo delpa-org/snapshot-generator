@@ -66,5 +66,5 @@ jobs:
         run: |
           gh repo create "delpa-org/snapshot-${PACKAGE_ARCHIVE_NAME}" -d "Melpa snapshot on ${PACKAGE_ARCHIVE_NAME}"  --disable-wiki --public --source . --push
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN }}
 
