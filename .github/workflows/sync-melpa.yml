@@ -47,6 +47,7 @@ jobs:
 
   upload:
     name: Upload to releases
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-24.04
     needs: [sync-melpa]
     env:
@@ -67,7 +68,6 @@ jobs:
           path: ${{ env.PACKAGE_ARCHIVE_NAME }}.tar.xz
 
       - name: Upload to release
-        if: github.ref == 'refs/heads/master'
         run: gh release upload packages ${PACKAGE_ARCHIVE_NAME}.tar.xz
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
