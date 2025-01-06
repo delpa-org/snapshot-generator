@@ -23,7 +23,7 @@ on:
   pull_request:
     branches: ["master"]
   schedule:
-    - cron: '0 0 2 * *'
+    - cron: '0 0 2,17 * *'
 
 jobs:
   sync-melpa:
