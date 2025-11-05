@@ -31,7 +31,16 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: Sync in Melpa packages files
-        run: rsync -avz --compress-choice=zstd --delete rsync://melpa.org/packages/ "packages/"
+        run: |
+          set +e
+          retries=3
+          for ((i=0; i<retries; i++)); do
+            rsync -avz --compress-choice=zstd --delete rsync://melpa.org/packages/ "packages/"
+            [[ $? -eq 0 ]] && exit 0
+            echo "Failed $((i+1)) times. Will retry up to 3 times..."
+            sleep 30
+          done
+          exit 1
 
       - name: Upload as artifact
         uses: actions/upload-artifact@v4.6.2
