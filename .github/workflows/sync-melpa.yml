@@ -59,7 +59,7 @@ jobs:
         id: package-archive-name
         run:
           echo "PACKAGE_ARCHIVE_NAME=$(date +"%Y-%m-%d")" >> $GITHUB_ENV
-      - uses: actions/download-artifact@v8.0.0
+      - uses: actions/download-artifact@v8.0.1
         with:
           name: packages
           path: packages
