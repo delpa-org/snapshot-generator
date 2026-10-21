@@ -28,7 +28,7 @@ on:
 jobs:
   sync-melpa:
     name: Sync packages from Melpa
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     steps:
       - name: Sync in Melpa packages files
         run: |
@@ -52,7 +52,7 @@ jobs:
   create-repo:
     name: Create the repo
     if: github.ref == 'refs/heads/master'
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     needs: [sync-melpa]
     steps:
       - name: Generate package archive's name
